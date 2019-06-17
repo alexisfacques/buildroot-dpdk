@@ -1,0 +1,66 @@
+config BR2_PACKAGE_DPDK_ARCH_SUPPORTS
+  bool
+  depends on BR2_TOOLCHAIN_HAS_SYNC_1 && \
+             BR2_TOOLCHAIN_HAS_SYNC_2 && \
+             BR2_TOOLCHAIN_HAS_SYNC_4 && \
+             BR2_TOOLCHAIN_HAS_SYNC_8
+  default y if BR2_x86_i686
+  default y if BR2_x86_64
+  default y if BR2_aarch64 || BR2_aarch64_be
+
+config BR2_PACKAGE_DPDK_ARCH_CONFIG
+  string
+  depends on BR2_PACKAGE_DPDK_ARCH_SUPPORTS
+  default "i686-native-linuxapp-gcc" if BR2_x86_i686
+  default "x86_64-native-linuxapp-gcc" if BR2_x86_64
+  default "arm64-armv8a-linuxapp-gcc" if BR2_aarch64 || BR2_aarch64_be
+
+comment "dpdk needs BR2_PACKAGE_BUSYBOX_SHOW_OTHERS"
+	depends on !BR2_PACKAGE_BUSYBOX_SHOW_OTHERS
+
+comment "dpdk needs a python interpreter"
+  depends on !(BR2_PACKAGE_PYTHON || BR2_PACKAGE_PYTHON3)
+
+comment "dpdk needs a glibc toolchain to be built"
+  depends on BR2_PACKAGE_DPDK_ARCH_SUPPORTS
+  depends on !BR2_TOOLCHAIN_USES_GLIBC
+
+config BR2_PACKAGE_DPDK
+  bool "dpdk"
+  depends on (BR2_PACKAGE_PYTHON || BR2_PACKAGE_PYTHON3)
+  depends on BR2_PACKAGE_BUSYBOX_SHOW_OTHERS
+  depends on BR2_PACKAGE_DPDK_ARCH_SUPPORTS
+  depends on BR2_TOOLCHAIN_USES_GLIBC
+  select BR2_PACKAGE_PCIUTILS
+  select BR2_PACKAGE_NET_TOOLS
+  select BR2_PACKAGE_LIBGLIB2
+  select BR2_PACKAGE_NUMACTL
+  help
+    DPDK is a set of libraries and drivers for fast packet processing.
+    http://www.dpdk.org/
+
+if BR2_PACKAGE_DPDK
+  comment "DPDK kernel modules need a Linux kernel to be built"
+  	depends on !BR2_LINUX_KERNEL
+
+  config BR2_PACKAGE_DPDK_KERNEL_MODULES
+    bool "Install kernel modules"
+    depends on BR2_LINUX_KERNEL
+
+    choice
+    	prompt "DPDK Version"
+      default BR2_DPDK_19_02 if !BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_REALLY_OLD
+      default BR2_DPDK_18_11 if BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_REALLY_OLD
+
+    	help
+    	  Select the version of dpdk you wish to use.
+
+      config BR2_DPDK_19_02
+      	bool "dpdk 19.02 (Kernel version >= 3.16)"
+
+      config BR2_DPDK_18_11
+      	bool "dpdk 18.11 (Kernel version >= 3.2)"
+
+    endchoice
+
+endif

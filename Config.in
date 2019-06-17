@@ -1,0 +1,1 @@
+source "$BR2_EXTERNAL_DPDK_PATH/package/dpdk/Config.in"
